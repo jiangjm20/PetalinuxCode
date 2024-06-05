@@ -1,0 +1,27 @@
+/include/ "system-conf.dtsi"
+/ {
+};
+
+
+
+&amba_pl {
+        axidma_chrdev: axidma_chrdev@0 {
+                compatible = "xlnx,axidma-chrdev";
+                dmas = <&axi_dma_0 0 &axi_dma_0 1>;
+                dma-names = "tx_channel", "rx_channel";
+        };
+};
+
+
+&axi_dma_0 {
+        clock-names = "s_axi_lite_aclk", "m_axi_sg_aclk", "m_axi_mm2s_aclk", "m_axi_s2mm_aclk";
+        clocks = <&clkc 15>, <&clkc 15>, <&clkc 15>, <&clkc 15>;
+        dma-channel@40400000 {
+                xlnx,device-id = <0x0>;
+                dma-channels = <1>;
+        };
+        dma-channel@40400030 {
+                xlnx,device-id = <0x1>;
+                dma-channels = <1>;
+        };
+};

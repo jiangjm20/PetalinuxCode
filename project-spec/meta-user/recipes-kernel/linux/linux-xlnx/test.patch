@@ -1,0 +1,120 @@
+diff --git a/arch/arm/Makefile b/arch/arm/Makefile
+index c846119c448f..14a036f933bb 100644
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -51,6 +51,10 @@ CHECKFLAGS	+= -D__ARMEL__
+ KBUILD_LDFLAGS	+= -EL
+ endif
+ 
++C_FLAGS += -mfloat-abi=soft
++ccflags-y += -mfloat-abi=softfp
++
++
+ #
+ # The Scalar Replacement of Aggregates (SRA) optimization pass in GCC 4.9 and
+ # later may result in code being generated that handles signed short and signed
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index ac964612d8b0..4e5148a72828 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -464,3 +464,6 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common	futex_waitv			sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451     common  hello_world                     sys_hello_world
++452     common  call_fpga                       sys_call_fpga
++453     common  vector_mul                      sys_vector_mul
+\ No newline at end of file
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a34b0f9a9972..e06607d4ea3b 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1278,6 +1278,9 @@ asmlinkage long sys_ni_syscall(void);
+ 
+ #endif /* CONFIG_ARCH_HAS_SYSCALL_WRAPPER */
+ 
++asmlinkage long sys_hello_world(void);
++asmlinkage long sys_call_fpga(void);
++asmlinkage long vector_mul(int len,float*w1,float*w2,float*res);
+ 
+ /*
+  * Kernel code should not call syscalls (i.e., sys_xyzyyz()) directly.
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 45fa180cc56a..1388206c572a 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -886,8 +886,17 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ 
++#define __NR_hello_world 451
++__SYSCALL(__NR_hello_world,sys_hello_world)
++
++#define __NR_call_fpga 452
++__SYSCALL(__NR_call_fpga,sys_call_fpga)
++
++#define __NR_vector_mul 453
++__SYSCALL(__NR_vector_mul,sys_vector_mul)    
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 451
++#define __NR_syscalls 454
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 5fd54bf0e886..10a63e9e5fa1 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2791,3 +2791,28 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+ 	return 0;
+ }
+ #endif /* CONFIG_COMPAT */
++
++SYSCALL_DEFINE0(hello_world){
++    printk("Hello_World");
++    return 0;
++}
++
++
++SYSCALL_DEFINE0(call_fpga){
++    u64 x=ktime_get_ns();
++    for(int i=0;i<10;i++);
++    u64 y=ktime_get_ns();
++    printk("Time: %llu %llu\n",x,y);
++    printk("Time Elapsed FPGA\n",y-x);
++    return 0;
++}
++
++SYSCALL_DEFINE4(vector_mul,int,len,float*,w1,float*,w2,float*,res){
++    u64 x=ktime_get_ns();
++//    for(int i=0;i<len;i++)
++//        res[i]=w1[i]*w2[i];
++    u64 y=ktime_get_ns();
++    printk("Time: %llu %llu\n",x,y);
++    printk("Time Elapsed FPGA\n",y-x);
++    return 0;
++}
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index 45fa180cc56a..e3b06a0d954b 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -886,8 +886,17 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ 
++#define __NR_hello_world 451
++__SYSCALL(__NR_hello_world,sys_hello_world)
++
++#define __NR_call_fpga 452
++__SYSCALL(__NR_call_fpga,sys_call_fpga)
++
++#define __NR_vector_mul 453
++__SYSCALL(__NR_vector_mul,sys_vector_mul)    
++   
+ #undef __NR_syscalls
+-#define __NR_syscalls 451
++#define __NR_syscalls 454
+ 
+ /*
+  * 32 bit systems traditionally used different

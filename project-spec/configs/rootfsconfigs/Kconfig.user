@@ -1,0 +1,30 @@
+menu "user packages " 
+config axidmatest  
+	 bool "axidmatest"
+	 help
+	
+config dmadriver  
+	 bool "dmadriver"
+	 help
+	
+config gpio-demo  
+	 bool "gpio-demo"
+	 help
+	
+config helloworld  
+	 bool "helloworld"
+	 help
+	
+config multiply  
+	 bool "multiply"
+	 help
+	
+config parser  
+	 bool "parser"
+	 help
+	
+config peekpoke  
+	 bool "peekpoke"
+	 help
+	
+endmenu
